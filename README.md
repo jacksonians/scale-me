@@ -19,8 +19,19 @@ your cost          = your contracts × contract cost   (also your max loss for a
 - If your portfolio is too small to match with one contract, the app says so and shows the portfolio size you'd need.
 - The rounding step tolerates floating-point drift, so an exact answer of 3 never becomes 2.
 
+## Fill from a screenshot
+
+Drop, paste, or choose a Robinhood screenshot at the top of the page, and the ticker, contracts, and premium fill in. It reads the "order filled" sheet, the order detail page, and the option position page, in light or dark mode.
+
+- The premium is what was actually paid per share. That is the fill price ("400 contracts at $1.29"), else the position's average cost, else the estimated total cost ÷ (contracts × 100). The limit price is used only when none of those appear.
+- Values must be read unambiguously. A price that OCR garbles (say "$415" for $4.15) is left blank and flagged instead of guessed.
+- OCR is [Tesseract.js](https://github.com/naptha/tesseract.js), loaded the first time a screenshot is added. Its engine and English model are served from this site (`scripts/copy-ocr-assets.mjs` copies them into `public/ocr/` before `dev` and `build`).
+
+The parsing lives in `src/lib/screenshot/`. `ocr.integration.test.ts` runs real OCR on the screenshots in `src/lib/screenshot/__fixtures__/`, so add a fixture there when you find a screen it misreads.
+
 ## Privacy
 
+- **Screenshots** are read in your browser and never uploaded.
 - **Your portfolio** is saved in your browser's localStorage and is never sent anywhere or included in share links.
 - **Share links** contain only the reference trade: `?c=500&p=2.5&rp=10000000&t=NVDA`.
 
