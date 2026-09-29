@@ -1,0 +1,60 @@
+@import '@fontsource-variable/archivo/wdth.css';
+@import 'tailwindcss';
+
+@theme {
+  --font-sans: 'Archivo Variable', 'Archivo', ui-sans-serif, system-ui, sans-serif;
+
+  --color-paper: #f3f5f8;
+  --color-sheet: #ffffff;
+  --color-ink: #1a2238;
+  --color-muted: #5b6479;
+  --color-rule: #d5dae4;
+  --color-carbon: #2b3fd6;
+  --color-carbon-ink: #ffffff;
+  --color-carbon-soft: #c9d0ff;
+  --color-focus: #2b3fd6;
+  --color-caution: #a15c00;
+  --color-caution-bg: #fff4e0;
+  --color-error: #b42318;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-paper: #0f1526;
+    --color-sheet: #172038;
+    --color-ink: #e6eaf2;
+    --color-muted: #9aa3b8;
+    --color-rule: #2c3753;
+    --color-carbon: #2e3fb8;
+    --color-carbon-ink: #ffffff;
+    --color-carbon-soft: #c3caff;
+    --color-focus: #8f9bff;
+    --color-caution: #f5b950;
+    --color-caution-bg: #3a2a0c;
+    --color-error: #ff8a80;
+  }
+}
+
+/* Condensed tabular figures so columns of numbers line up like a quote board */
+@utility figures {
+  font-stretch: 72%;
+  font-variant-numeric: tabular-nums;
+}
+
+@layer base {
+  html {
+    color-scheme: light dark;
+  }
+
+  body {
+    background-color: var(--color-paper);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-focus);
+    outline-offset: 2px;
+  }
+}
