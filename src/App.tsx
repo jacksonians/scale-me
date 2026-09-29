@@ -4,10 +4,12 @@ import { MyPortfolioInput } from './components/MyPortfolioInput'
 import { ReferenceTradeInputs } from './components/ReferenceTradeInputs'
 import { ResultCard } from './components/ResultCard'
 import { ScaleJoint } from './components/ScaleJoint'
+import { ScreenshotImport } from './components/ScreenshotImport'
 import { ShareButton } from './components/ShareButton'
 import { fieldErrorMessage } from './lib/fieldErrors'
 import { formatAmountInput, formatCurrency, formatPercent } from './lib/format'
 import { parseAmount } from './lib/parse'
+import type { ExtractedTrade } from './lib/screenshot/extractTrade'
 import { computeSizing } from './lib/sizing'
 import { loadMyPortfolio, saveMyPortfolio } from './lib/storage'
 import { normalizeTicker, readTradeFromSearch, writeTradeToSearch, type ReferenceTradeFields } from './lib/urlState'
@@ -68,6 +70,18 @@ export default function App() {
     setTrade((current) => ({ ...current, [field]: field === 'ticker' ? normalizeTicker(value) : value }))
   }
 
+  // A screenshot describes a whole trade, so fields it doesn't show are cleared
+  // rather than left over from the previous one. Their portfolio never appears
+  // in a screenshot and is kept.
+  function applyScreenshot(extracted: ExtractedTrade) {
+    setTrade((current) => ({
+      ...current,
+      ticker: normalizeTicker(extracted.ticker ?? ''),
+      refContracts: extracted.contracts === undefined ? '' : formatAmountInput(String(extracted.contracts)),
+      premium: extracted.premium === undefined ? '' : extracted.premium.toFixed(2),
+    }))
+  }
+
   const hasShareableTrade = writeTradeToSearch(trade) !== ''
 
   return (
@@ -78,6 +92,7 @@ export default function App() {
       </header>
 
       <div className="flex flex-col gap-3">
+        <ScreenshotImport onExtracted={applyScreenshot} />
         <ReferenceTradeInputs
           trade={trade}
           onChange={updateTrade}

@@ -1,7 +1,12 @@
 import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import App from './App'
+import { readScreenshot } from './lib/screenshot/ocr'
+
+vi.mock('./lib/screenshot/ocr', () => ({ readScreenshot: vi.fn() }))
+
+const screenshot = () => new File(['pixels'], 'trade.png', { type: 'image/png' })
 
 async function fillReferenceTrade(user: ReturnType<typeof userEvent.setup>) {
   await user.type(screen.getByLabelText('Contracts'), '500')
@@ -117,5 +122,47 @@ describe('App', () => {
 
     expect(await navigator.clipboard.readText()).toBe(window.location.href)
     expect(screen.getByText('Link copied')).toBeInTheDocument()
+  })
+})
+
+describe('App: fill from a screenshot', () => {
+  it('fills the reference trade and keeps their portfolio', async () => {
+    vi.mocked(readScreenshot).mockResolvedValue({
+      ticker: 'AVGO',
+      strike: 420,
+      optionType: 'Call',
+      expiry: '10/30',
+      side: 'buy',
+      contracts: 1200,
+      premium: 1.29,
+      premiumSource: 'fill',
+    })
+    const user = userEvent.setup()
+    render(<App />)
+    await user.type(screen.getByLabelText('Their portfolio'), '10m')
+
+    await user.upload(screen.getByLabelText(/choose image/i), screenshot())
+
+    expect(screen.getByLabelText('Ticker (optional)')).toHaveValue('AVGO')
+    expect(screen.getByLabelText('Contracts')).toHaveValue('1,200')
+    expect(screen.getByLabelText('Premium per share')).toHaveValue('1.29')
+    expect(screen.getByLabelText('Their portfolio')).toHaveValue('10,000,000')
+    expect(window.location.search).toBe('?c=1200&p=1.29&rp=10000000&t=AVGO')
+  })
+
+  it('clears fields the new screenshot does not show instead of mixing trades', async () => {
+    window.history.replaceState(null, '', '/?c=500&p=2.5&t=NVDA')
+    vi.mocked(readScreenshot).mockResolvedValue({ ticker: 'BE', contracts: 30 })
+    const user = userEvent.setup()
+    render(<App />)
+
+    await user.upload(screen.getByLabelText(/choose image/i), screenshot())
+
+    expect(screen.getByLabelText('Ticker (optional)')).toHaveValue('BE')
+    expect(screen.getByLabelText('Contracts')).toHaveValue('30')
+    expect(screen.getByLabelText('Premium per share')).toHaveValue('')
+    expect(screen.getByRole('region', { name: 'Fill from a screenshot' })).toHaveTextContent(
+      "Couldn't find the premium",
+    )
   })
 })
