@@ -15,6 +15,7 @@ export function MyPortfolioInput({ value, onChange, error }: MyPortfolioInputPro
         onChange={onChange}
         placeholder="40,000"
         prefix="$"
+        inputMode="text"
         hint="Saved on this device. Never included in share links."
         groupDigitsOnBlur
         error={error}

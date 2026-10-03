@@ -50,6 +50,7 @@ export function ReferenceTradeInputs({ trade, onChange, errors, summary }: Refer
             onChange={(value) => onChange('refPortfolio', value)}
             placeholder="10,000,000"
             prefix="$"
+            inputMode="text"
             hint="Total account size. 10M and 250k work too."
             groupDigitsOnBlur
             error={errors.refPortfolio}
