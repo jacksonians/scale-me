@@ -50,6 +50,8 @@ export function AmountField({
           type="text"
           inputMode={inputMode}
           autoComplete="off"
+          autoCorrect="off"
+          autoCapitalize="off"
           spellCheck={false}
           value={value}
           placeholder={placeholder}

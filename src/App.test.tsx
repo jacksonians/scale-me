@@ -82,6 +82,26 @@ describe('App', () => {
     expect(screen.getByLabelText('Contracts')).toHaveAccessibleDescription(/whole number/i)
   })
 
+  it('opens a letter keyboard on phones for portfolio fields so 10M and 250k can be typed', () => {
+    render(<App />)
+
+    expect(screen.getByLabelText('Their portfolio')).toHaveAttribute('inputmode', 'text')
+    expect(screen.getByLabelText('Your portfolio')).toHaveAttribute('inputmode', 'text')
+    expect(screen.getByLabelText('Premium per share')).toHaveAttribute('inputmode', 'decimal')
+    expect(screen.getByLabelText('Their portfolio')).toHaveAttribute('autocorrect', 'off')
+  })
+
+  it('suggests shorthand only for portfolio amounts', async () => {
+    const user = userEvent.setup()
+    render(<App />)
+
+    await user.type(screen.getByLabelText('Premium per share'), 'abc')
+    await user.type(screen.getByLabelText('Their portfolio'), 'abc')
+
+    expect(screen.getByLabelText('Premium per share')).toHaveAccessibleDescription('Enter a price, like 2.50.')
+    expect(screen.getByLabelText('Their portfolio')).toHaveAccessibleDescription('Enter an amount, like 40,000 or 10M.')
+  })
+
   it('remembers my portfolio across visits', async () => {
     const user = userEvent.setup()
     const { unmount } = render(<App />)

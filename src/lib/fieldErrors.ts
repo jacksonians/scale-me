@@ -1,6 +1,13 @@
 import { parseAmount } from './parse'
 import type { SizingError, SizingField } from './sizing'
 
+const INVALID_AMOUNT_MESSAGES: Record<SizingField, string> = {
+  refContracts: 'Enter a whole number, like 500.',
+  premium: 'Enter a price, like 2.50.',
+  refPortfolio: 'Enter an amount, like 40,000 or 10M.',
+  myPortfolio: 'Enter an amount, like 40,000 or 10M.',
+}
+
 // Only explain problems with what the user actually typed; blank fields are
 // "not yet filled in", not an error.
 export function fieldErrorMessage(
@@ -12,7 +19,7 @@ export function fieldErrorMessage(
     return undefined
   }
   if (parseAmount(raw) === null) {
-    return field === 'refContracts' ? 'Enter a whole number, like 500.' : 'Enter an amount, like 2.50 or 10M.'
+    return INVALID_AMOUNT_MESSAGES[field]
   }
   switch (sizingError) {
     case 'not-positive':
