@@ -28,7 +28,7 @@ The sizing math, OCR, URL state, and local storage are untouched. This is a mark
 
 | Token | Value | Use | Contrast on base |
 |---|---|---|---|
-| `--color-base` | `#EDEBE6` | Page background (limestone) | — |
+| `--color-ground` | `#EDEBE6` | Page background (limestone). Not named `base`: Tailwind's `text-base` is a font size. | — |
 | `--color-ink` | `#1D1F24` | Values, headings, rules, pill borders | 13.8:1 |
 | `--color-muted` | `#5E6068` | Labels, hints, captions | 5.3:1 |
 | `--color-placeholder` | `#67696F` | Placeholder text (weight 400) | 4.6:1 |
@@ -36,7 +36,7 @@ The sizing math, OCR, URL state, and local storage are untouched. This is a mark
 | `--color-error` | `#A3261B` | Field errors, error underline, error status text | 6.2:1 |
 | `--color-caution` | `#7A4E00` | Warning bar and "looks like a sell" note | 6.0:1 |
 | `--color-rule` | `rgb(29 31 36 / 0.16)` | Faint dividers (status strip, disclaimer), disabled borders | decorative |
-| `--color-ring` | `rgb(29 31 36 / 0.13)` | Concentric ring lines | decorative |
+| `--color-ring-line` | `rgb(29 31 36 / 0.13)` | Concentric ring lines | decorative |
 
 Placeholders are told apart from typed values by weight (400 vs 500) and color (gray vs ink), not by being faint. Disabled controls and decorative lines are exempt from contrast minimums.
 
@@ -106,7 +106,7 @@ Column: `max-width: 26rem`, centered, side padding 20px (keeps ≥ 16px gutter o
 ### `index.css`
 
 - Replace the `@theme` tokens with the table above; delete the `prefers-color-scheme: dark` block.
-- `html { color-scheme: light }`; body background `--color-base`, color `--color-ink`, font Jost.
+- `html { color-scheme: light }`; body background `--color-ground`, color `--color-ink`, font Jost.
 - Global `:focus-visible` uses the accent ring above.
 - `--font-display: 'Poiret One'`, `--font-sans: 'Jost Variable', 'Jost', ui-sans-serif, system-ui, sans-serif`.
 - Utilities: `tnum`. `sr-only` is Tailwind's built-in.
@@ -126,20 +126,24 @@ New order: header (wordmark + subtitle + `ScreenshotImport`) → `ResultCard` �
 ### `ResultCard` (rings + caption)
 
 - Keeps `<section aria-labelledby="your-trade-heading">` with the heading text "Your trade", now visually hidden (`sr-only`), so `getByRole('region', { name: 'Your trade' })` keeps working.
-- Rings: a 190px circle of concentric ring lines (repeating radial gradient in `--color-ring`), with a 128px inner circle bordered 1.5px ink on `--color-base`. Inside: the number (`data-testid="recommended-contracts"`) and the word "contracts" / "contract" beneath it at 12px muted.
-- Number size by formatted length (`result.recommended.toLocaleString('en-US')`):
+- Rings: a 190px circle of concentric ring lines (repeating radial gradient in `--color-ring-line`), with a 128px inner circle bordered 1.5px ink on `--color-ground`. Inside: the number (`data-testid="recommended-contracts"`) and the word "contracts" / "contract" beneath it at 12px muted.
+- Number size by formatted length (`result.recommended.toLocaleString('en-US')`). Poiret One's "0" is 0.86em wide and the inner circle leaves about 108px, so (measured):
   - 1 character: 88px
-  - 2 characters: 76px
-  - 3 characters: 60px
-  - 4–5 characters (e.g. "1,250"): 44px
-  - 6+ characters: 34px
+  - 2 characters: 60px
+  - 3 characters: 40px
+  - 4–5 characters (e.g. "1,250"): 28px
+  - 6 characters: 24px
+  - 7 characters: 20px
+  - 8+ characters: 15px
   Implemented as a pure function `contractCountSize(text: string): string` in `src/lib/contractCountSize.ts` returning a Tailwind text-size class, so it's unit-testable.
 - Number color: accent when `recommended > 0`; muted when `recommended === 0`.
-- Empty state (`!result.ok`): the rings show an en dash "–" at 56px in `--color-ring`-strength ink (≈ 30% ink), not exposed to screen readers (`aria-hidden`). An `sr-only` paragraph reads: "Fill in the reference trade and your portfolio to see how many contracts to buy."
+- Empty state (`!result.ok`): the rings show an en dash "–" at 56px in 30% ink, not exposed to screen readers (`aria-hidden`). An `sr-only` paragraph reads: "Fill in the reference trade and your portfolio to see how many contracts to buy."
 - Caption (when `result.ok`), left-aligned, 14px muted with ink emphasis:
   - Line 1: `Buy <b>{n} {TICKER}</b> at {premium} per share` when `recommended > 0`. When `recommended === 0`: "At the same share of your portfolio" (no "Buy").
   - Line 2: `<b>{myCost}</b>, the most you can lose`. The cost is its own element so `getByText('$500')` matches.
   - Line 3: `{myPct} of your portfolio, theirs was {refPct}`.
+  - Lines 2 and 3 are shown only when `recommended > 0`; for a zero result the warning explains instead of "$0, the most you can lose".
+  - Without a ticker, line 1 reads `Buy <b>{n} contracts</b> at …` (`formatContracts`).
 - Round-up note (unchanged text): "Rounding up to {n} contracts would cost {cost}, {pct} of your portfolio." 12.5px muted.
 - Warnings: unchanged text, `role="status"` container. Each warning is a paragraph with a 3px `--color-caution` left border, ink text, no background fill.
 
@@ -164,11 +168,11 @@ New order: header (wordmark + subtitle + `ScreenshotImport`) → `ResultCard` �
 ### `ScreenshotImport`
 
 - Becomes two visual pieces in one `<section aria-labelledby>` region whose accessible name stays "Fill from a screenshot" (visually hidden heading):
-  1. A pill in the header with visible text "⤒ Screenshot" (arrow `aria-hidden`). It's a `<label>` wrapping the visually hidden file input; the input has `aria-label="Choose image"` so `getByLabelText(/choose image/i)` and assistive tech still find it. Focus inside the label shows the accent ring on the pill (`focus-within`).
-  2. A status strip under the header that appears only after the first import attempt (`state.status !== 'idle'`): a 30×40 thumbnail (the preview image, 1.5px ink border, radius 6px) plus the existing status messages. Top and bottom 1px `--color-rule` dividers. Keeps `role="status"` and `aria-busy`.
+  1. A pill in the header with visible text "⤒ Screenshot" (arrow `aria-hidden`). It's a `<label>` wrapping the visually hidden file input, with visually hidden text after "Screenshot" so the accessible name is "Screenshot: choose image". It starts with the visible word (so voice control works) and still matches `getByLabelText(/choose image/i)`. Focus inside the label shows the accent ring on the pill (`focus-within`).
+  2. A status strip under the header that appears only after the first import attempt (`state.status !== 'idle'`): a 30×40 thumbnail (the preview image, 1.5px ink border, radius 6px) plus the existing status messages. Top and bottom 1px `--color-rule` dividers. Keeps `role="status"` and `aria-busy`. The strip uses `border-y` in `--color-rule`.
 - Idle state shows no strip. The idle sentence ("Contracts, premium, and ticker fill in automatically.") stays available as `sr-only` text inside the status element so the region isn't empty for screen readers.
 - Paste: unchanged (document-level).
-- Drop: moves to the whole page. Add document-level `dragover`/`dragleave`/`drop` handlers, next to the existing paste handler. Only file drags (`dataTransfer.types` includes `Files`) are intercepted. While a file is dragged over the page, show a full-viewport overlay: a 2px dashed ink outline inset 12px from the viewport edges, with "Drop the screenshot to read it" centered on a base-colored backdrop. Non-image drops show the existing "isn't an image" error.
+- Drop: moves to the whole page. Add document-level `dragover`/`dragleave`/`drop` handlers, next to the existing paste handler. Only file drags (`dataTransfer.types` includes `Files`) are intercepted. While a file is dragged over the page, show a full-viewport overlay: a 2px dashed ink outline inset 12px from the viewport edges, with "Drop the screenshot to read it" centered on a ground-colored backdrop. The overlay is shown on a file `dragenter` anywhere and hidden on `dragleave` from the overlay itself (its children are `pointer-events: none`, so leaving the overlay means leaving the window) or on `drop`. This avoids the flicker of counting enter/leave pairs across child elements. Non-image drops show the existing "isn't an image" error.
 - Keep an element with `data-testid="screenshot-dropzone"` (the section itself) so existing tests can still fire `drop` on it; the event bubbles to the document handler. The handler must not double-read when the event is handled by both.
 - All existing status texts are unchanged.
 
@@ -184,7 +188,8 @@ New order: header (wordmark + subtitle + `ScreenshotImport`) → `ResultCard` �
 
 - Purpose: keep the answer visible when the rings are scrolled off screen.
 - Shows only when `result.ok` and the rings element is not intersecting the viewport. Uses one `IntersectionObserver` on the rings element. If `IntersectionObserver` is undefined (old browsers, jsdom), it never shows.
-- Content: the number in Poiret One at 30px, accent colored (muted when 0), then "{TICKER} contracts, {myCost}" (ticker omitted when blank; "contract" when 1) at 14px ink. Bottom border: 1.5px ink line. Background `--color-base`, `position: sticky` at `top: env(safe-area-inset-top, 0px)` with `z-index` above content, full column width. It takes no space while hidden (not rendered).
+- Content: the number in Poiret One at 30px, accent colored (muted when 0), then "{TICKER} contracts, {myCost}" (ticker omitted when blank; "contract" when 1) at 14px ink. Bottom border: 1.5px ink line. Background `--color-ground`, `position: fixed` across the top of the viewport (inner content constrained to the column width), top padding includes `env(safe-area-inset-top)`, `z-index` above content. It must be out of flow: a sticky element would push content down when it appears, which can scroll the rings back into view and make the line flicker on and off.
+- `html { scroll-padding-top: 4.5rem }` so a focused input or anchor is never hidden under the pinned line.
 - `aria-hidden="true"`: it repeats the result, which screen readers already have.
 - Lives outside the "Your trade" region so it doesn't duplicate test matches.
 - Enter animation: 150ms translate-from-top + fade; instant under reduced motion.
