@@ -1,9 +1,9 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Disclaimer } from './components/Disclaimer'
 import { MyPortfolioInput } from './components/MyPortfolioInput'
+import { PinnedAnswer } from './components/PinnedAnswer'
 import { ReferenceTradeInputs } from './components/ReferenceTradeInputs'
 import { ResultCard } from './components/ResultCard'
-import { ScaleJoint } from './components/ScaleJoint'
 import { ScreenshotImport } from './components/ScreenshotImport'
 import { ShareButton } from './components/ShareButton'
 import { fieldErrorMessage } from './lib/fieldErrors'
@@ -24,6 +24,7 @@ export default function App() {
     }
   })
   const [myPortfolio, setMyPortfolio] = useState(loadMyPortfolio)
+  const ringsRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     const search = writeTradeToSearch(trade)
@@ -85,38 +86,26 @@ export default function App() {
   const hasShareableTrade = writeTradeToSearch(trade) !== ''
 
   return (
-    <main className="mx-auto flex max-w-xl flex-col px-4 pt-8 pb-12 sm:pt-12">
-      <header className="mb-6">
-        <h1 className="figures text-4xl font-bold tracking-tight">scale-me</h1>
-        <p className="mt-1 text-muted">Size a big options trade down to your portfolio.</p>
-      </header>
-
-      <div className="flex flex-col gap-3">
-        <ScreenshotImport onExtracted={applyScreenshot} />
-        <ReferenceTradeInputs
-          trade={trade}
-          onChange={updateTrade}
-          errors={tradeErrors}
-          summary={referenceSummary}
-        />
-        <MyPortfolioInput
-          value={myPortfolio}
-          onChange={setMyPortfolio}
-          error={fieldErrorMessage('myPortfolio', myPortfolio, sizingErrors.myPortfolio)}
-        />
-      </div>
-
-      <ScaleJoint scaleRatio={result.ok ? result.scaleRatio : null} />
-
-      <ResultCard result={result} ticker={normalizeTicker(trade.ticker)} />
-
-      <div className="mt-6">
-        <ShareButton disabled={!hasShareableTrade} />
-      </div>
-
-      <div className="mt-10">
-        <Disclaimer />
-      </div>
+    <main className="mx-auto flex max-w-[26rem] flex-col gap-6 px-5 pt-[calc(env(safe-area-inset-top)+1.5rem)] pb-12 sm:pt-10">
+      <PinnedAnswer result={result} ticker={normalizeTicker(trade.ticker)} targetRef={ringsRef} />
+      <ScreenshotImport
+        onExtracted={applyScreenshot}
+        heading={
+          <>
+            <h1 className="font-display text-[28px] leading-none">scale-me</h1>
+            <p className="mt-1 text-[12.5px] text-muted">Size their trade to your portfolio</p>
+          </>
+        }
+      />
+      <ResultCard result={result} ticker={normalizeTicker(trade.ticker)} ringsRef={ringsRef} />
+      <ReferenceTradeInputs trade={trade} onChange={updateTrade} errors={tradeErrors} summary={referenceSummary} />
+      <MyPortfolioInput
+        value={myPortfolio}
+        onChange={setMyPortfolio}
+        error={fieldErrorMessage('myPortfolio', myPortfolio, sizingErrors.myPortfolio)}
+      />
+      <ShareButton disabled={!hasShareableTrade} />
+      <Disclaimer />
     </main>
   )
 }

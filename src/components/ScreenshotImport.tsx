@@ -1,9 +1,11 @@
-import { useEffect, useRef, useState, type DragEvent } from 'react'
+import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { describeExtraction, type ExtractedTrade, type ExtractionDescription } from '../lib/screenshot/extractTrade'
 import { readScreenshot } from '../lib/screenshot/ocr'
 
 interface ScreenshotImportProps {
   onExtracted: (trade: ExtractedTrade) => void
+  // The page title block, shown to the left of the Screenshot pill
+  heading?: ReactNode
 }
 
 type ImportState =
@@ -16,7 +18,14 @@ function firstImage(files: FileList | File[] | undefined | null): File | undefin
   return Array.from(files ?? []).find((file) => file.type.startsWith('image/'))
 }
 
-export function ScreenshotImport({ onExtracted }: ScreenshotImportProps) {
+// Browsers repeat dragover every 50-350ms during a drag
+const DRAG_IDLE_MS = 1000
+
+function isFileDrag(event: DragEvent): boolean {
+  return Array.from(event.dataTransfer?.types ?? []).includes('Files')
+}
+
+export function ScreenshotImport({ onExtracted, heading }: ScreenshotImportProps) {
   const [state, setState] = useState<ImportState>({ status: 'idle' })
   const [previewUrl, setPreviewUrl] = useState<string | null>(null)
   const [dragging, setDragging] = useState(false)
@@ -72,78 +81,120 @@ export function ScreenshotImport({ onExtracted }: ScreenshotImportProps) {
         void readRef.current(file)
       }
     }
+    // dragover keeps firing while a file is over the page, so its silence means the
+    // drag ended somewhere we got no event for (Escape, or a quick exit past the edge)
+    let idleTimer: number | undefined
+    function keepDragging() {
+      setDragging(true)
+      window.clearTimeout(idleTimer)
+      idleTimer = window.setTimeout(() => setDragging(false), DRAG_IDLE_MS)
+    }
+    function stopDragging() {
+      window.clearTimeout(idleTimer)
+      setDragging(false)
+    }
+    function handleDragEnter(event: DragEvent) {
+      if (isFileDrag(event)) {
+        keepDragging()
+      }
+    }
+    function handleDragOver(event: DragEvent) {
+      // Without this the browser refuses the drop (or opens the image itself)
+      if (isFileDrag(event)) {
+        event.preventDefault()
+        keepDragging()
+      }
+    }
+    function handleDragLeave(event: DragEvent) {
+      // No element being entered means the pointer left the window. If a browser
+      // reports that mid-page, the next dragover shows the overlay again.
+      if (!event.relatedTarget) {
+        stopDragging()
+      }
+    }
+    function handleDrop(event: DragEvent) {
+      stopDragging()
+      const files = event.dataTransfer?.files
+      // Dropped text or links are not ours to handle
+      if (!files || files.length === 0) {
+        return
+      }
+      event.preventDefault()
+      void readRef.current(firstImage(files))
+    }
+
     document.addEventListener('paste', handlePaste)
-    return () => document.removeEventListener('paste', handlePaste)
+    document.addEventListener('dragenter', handleDragEnter)
+    document.addEventListener('dragover', handleDragOver)
+    document.addEventListener('dragleave', handleDragLeave)
+    document.addEventListener('drop', handleDrop)
+    return () => {
+      window.clearTimeout(idleTimer)
+      document.removeEventListener('paste', handlePaste)
+      document.removeEventListener('dragenter', handleDragEnter)
+      document.removeEventListener('dragover', handleDragOver)
+      document.removeEventListener('dragleave', handleDragLeave)
+      document.removeEventListener('drop', handleDrop)
+    }
   }, [])
 
-  function handleDrop(event: DragEvent) {
-    event.preventDefault()
-    setDragging(false)
-    void readRef.current(firstImage(event.dataTransfer.files))
-  }
-
   const busy = state.status === 'loading-engine' || state.status === 'reading'
+  const idle = state.status === 'idle'
 
   return (
-    <section aria-labelledby="screenshot-heading" className="rounded-lg border border-rule bg-sheet">
-      <div className="px-4 pt-4 pb-4 sm:px-5">
-        <h2 id="screenshot-heading" className="text-lg font-semibold">
+    <div className="flex flex-col">
+      <header className="flex items-center gap-3">
+        <div className="min-w-0 flex-1">{heading}</div>
+        <label className="pill shrink-0 cursor-pointer text-[13px] font-medium focus-within:outline-2 focus-within:outline-offset-[3px] focus-within:outline-accent">
+          <span aria-hidden="true">⤒</span>
+          Screenshot<span className="sr-only">: choose image</span>
+          <input
+            type="file"
+            accept="image/*"
+            className="sr-only"
+            onChange={(event) => {
+              void readRef.current(firstImage(event.target.files))
+              event.target.value = ''
+            }}
+          />
+        </label>
+      </header>
+      <section
+        aria-labelledby="screenshot-heading"
+        data-testid="screenshot-dropzone"
+        className={idle ? '' : 'mt-3 flex items-center gap-2.5 border-y border-rule py-2'}
+      >
+        <h2 id="screenshot-heading" className="sr-only">
           Fill from a screenshot
         </h2>
-        <p className="mt-0.5 text-sm text-muted">Robinhood order or position screens. Read on your device, never uploaded.</p>
-
+        {previewUrl && !idle && (
+          <img
+            src={previewUrl}
+            alt="Screenshot preview"
+            className="h-10 w-[30px] shrink-0 rounded-md border-[1.5px] border-ink object-cover object-top"
+          />
+        )}
         <div
-          data-testid="screenshot-dropzone"
-          onDragOver={(event) => {
-            event.preventDefault()
-            setDragging(true)
-          }}
-          onDragLeave={() => setDragging(false)}
-          onDrop={handleDrop}
-          className={`mt-3 flex items-center gap-3 rounded-md border border-dashed p-3 transition-colors ${
-            dragging ? 'border-focus bg-carbon-soft/20' : 'border-rule'
-          }`}
+          role="status"
+          aria-busy={busy}
+          className={idle ? 'sr-only' : 'min-w-0 flex-1 text-[12.5px] leading-normal text-muted'}
         >
-          {previewUrl ? (
-            <img
-              src={previewUrl}
-              alt="Screenshot preview"
-              className="h-14 w-14 shrink-0 rounded border border-rule object-cover object-top"
-            />
-          ) : (
-            <span
-              aria-hidden="true"
-              className="flex h-14 w-14 shrink-0 items-center justify-center rounded border border-rule text-2xl text-muted"
-            >
-              ⤓
-            </span>
-          )}
-          <div className="flex min-w-0 flex-1 flex-wrap items-center gap-x-3 gap-y-2">
-            <label className="cursor-pointer rounded-md border border-carbon px-3 py-2 font-medium text-carbon transition-colors focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-focus hover:bg-carbon hover:text-carbon-ink dark:border-carbon-soft dark:text-carbon-soft">
-              Choose image
-              <input
-                type="file"
-                accept="image/*"
-                className="sr-only"
-                onChange={(event) => {
-                  void readRef.current(firstImage(event.target.files))
-                  event.target.value = ''
-                }}
-              />
-            </label>
-            <span className="text-sm text-muted">or drop or paste it here</span>
+          <StatusMessage state={state} />
+        </div>
+      </section>
+      {dragging && (
+        <div
+          data-testid="drop-overlay"
+          // Children ignore the pointer, so leaving the overlay means leaving the window
+          onDragLeave={() => setDragging(false)}
+          className="fixed inset-0 z-20 bg-ground/90 p-3"
+        >
+          <div className="pointer-events-none flex h-full items-center justify-center rounded-2xl border-2 border-dashed border-ink text-lg font-medium">
+            Drop the screenshot to read it
           </div>
         </div>
-      </div>
-
-      <div
-        role="status"
-        aria-busy={busy}
-        className="min-h-12 border-t border-dashed border-rule px-4 py-3 text-sm text-muted sm:px-5"
-      >
-        <StatusMessage state={state} />
-      </div>
-    </section>
+      )}
+    </div>
   )
 }
 
@@ -164,7 +215,7 @@ function StatusMessage({ state }: { state: ImportState }) {
       }
       return (
         <div className="flex flex-col gap-1">
-          <p className="figures text-base text-ink">Read {description.summary}</p>
+          <p className="tnum text-sm text-ink">Read {description.summary}</p>
           {description.notes.map((note) => (
             <p key={note} className={note.startsWith('This looks like a sell') ? 'text-caution' : undefined}>
               {note}
