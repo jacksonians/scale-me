@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Disclaimer } from './components/Disclaimer'
 import { MyPortfolioInput } from './components/MyPortfolioInput'
+import { PinnedAnswer } from './components/PinnedAnswer'
 import { ReferenceTradeInputs } from './components/ReferenceTradeInputs'
 import { ResultCard } from './components/ResultCard'
 import { ScreenshotImport } from './components/ScreenshotImport'
@@ -86,6 +87,7 @@ export default function App() {
 
   return (
     <main className="mx-auto flex max-w-[26rem] flex-col gap-6 px-5 pt-[calc(env(safe-area-inset-top)+1.5rem)] pb-12 sm:pt-10">
+      <PinnedAnswer result={result} ticker={normalizeTicker(trade.ticker)} targetRef={ringsRef} />
       <ScreenshotImport
         onExtracted={applyScreenshot}
         heading={
