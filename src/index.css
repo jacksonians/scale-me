@@ -57,7 +57,15 @@
     background-color 150ms,
     color 150ms;
 
-  &:hover {
+  /* iOS keeps :hover after a tap, which would leave the pill filled */
+  @media (hover: hover) {
+    &:hover {
+      background-color: var(--color-ink);
+      color: var(--color-ground);
+    }
+  }
+
+  &:active:not(:disabled) {
     background-color: var(--color-ink);
     color: var(--color-ground);
   }
