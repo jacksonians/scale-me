@@ -15,7 +15,7 @@ export function ScaleJoint({ scaleRatio }: ScaleJointProps) {
           'Scaled to your portfolio'
         ) : (
           <>
-            Scaled <span className="figures text-base font-semibold text-ink">{formatScaleRatio(scaleRatio)}</span>,
+            Scaled <span className="tnum text-base font-semibold text-ink">{formatScaleRatio(scaleRatio)}</span>,
             your portfolio to theirs
           </>
         )}

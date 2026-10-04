@@ -87,7 +87,7 @@ export default function App() {
   return (
     <main className="mx-auto flex max-w-xl flex-col px-4 pt-8 pb-12 sm:pt-12">
       <header className="mb-6">
-        <h1 className="figures text-4xl font-bold tracking-tight">scale-me</h1>
+        <h1 className="tnum text-4xl font-bold tracking-tight">scale-me</h1>
         <p className="mt-1 text-muted">Size a big options trade down to your portfolio.</p>
       </header>
 

@@ -164,7 +164,7 @@ function StatusMessage({ state }: { state: ImportState }) {
       }
       return (
         <div className="flex flex-col gap-1">
-          <p className="figures text-base text-ink">Read {description.summary}</p>
+          <p className="tnum text-base text-ink">Read {description.summary}</p>
           {description.notes.map((note) => (
             <p key={note} className={note.startsWith('This looks like a sell') ? 'text-caution' : undefined}>
               {note}

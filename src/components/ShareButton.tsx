@@ -51,7 +51,7 @@ export function ShareButton({ disabled }: ShareButtonProps) {
             readOnly
             value={window.location.href}
             onFocus={(event) => event.currentTarget.select()}
-            className="figures rounded-md border border-rule bg-sheet px-3 py-2 text-ink"
+            className="tnum rounded-md border border-rule bg-sheet px-3 py-2 text-ink"
           />
         </label>
       )}

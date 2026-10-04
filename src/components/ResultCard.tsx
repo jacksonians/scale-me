@@ -44,7 +44,7 @@ export function ResultCard({ result, ticker }: ResultCardProps) {
           <p className="flex flex-wrap items-baseline gap-x-3">
             <span
               data-testid="recommended-contracts"
-              className="figures text-[clamp(5rem,26vw,8rem)] leading-[0.85] font-bold tracking-tight"
+              className="tnum text-[clamp(5rem,26vw,8rem)] leading-[0.85] font-bold tracking-tight"
             >
               {result.recommended.toLocaleString('en-US')}
             </span>
@@ -57,11 +57,11 @@ export function ResultCard({ result, ticker }: ResultCardProps) {
 
           <dl className="mt-5 grid grid-cols-[1fr_auto] gap-x-4 gap-y-2 border-t border-white/20 pt-4">
             <dt className="text-carbon-soft">Cost, and the most you can lose</dt>
-            <dd className="figures text-right text-lg font-semibold">{formatCurrency(result.myCost)}</dd>
+            <dd className="tnum text-right text-lg font-semibold">{formatCurrency(result.myCost)}</dd>
             <dt className="text-carbon-soft">Share of your portfolio</dt>
-            <dd className="figures text-right text-lg font-semibold">{formatPercent(result.myPct)}</dd>
+            <dd className="tnum text-right text-lg font-semibold">{formatPercent(result.myPct)}</dd>
             <dt className="text-carbon-soft">Share of theirs</dt>
-            <dd className="figures text-right text-lg font-semibold">{formatPercent(result.refPct)}</dd>
+            <dd className="tnum text-right text-lg font-semibold">{formatPercent(result.refPct)}</dd>
           </dl>
 
           {result.roundedUp && result.recommended > 0 && (

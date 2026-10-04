@@ -41,7 +41,7 @@ export function AmountField({
         }`}
       >
         {prefix && (
-          <span aria-hidden="true" className="figures pl-3 text-lg text-muted">
+          <span aria-hidden="true" className="tnum pl-3 text-lg text-muted">
             {prefix}
           </span>
         )}
@@ -59,7 +59,7 @@ export function AmountField({
           onBlur={groupDigitsOnBlur ? () => onChange(formatAmountInput(value)) : undefined}
           aria-invalid={error ? true : undefined}
           aria-describedby={description ? descriptionId : undefined}
-          className={`figures min-w-0 flex-1 bg-transparent py-2.5 pr-3 text-lg outline-none placeholder:text-muted/60 focus-visible:outline-none ${
+          className={`tnum min-w-0 flex-1 bg-transparent py-2.5 pr-3 text-lg outline-none placeholder:text-muted/60 focus-visible:outline-none ${
             prefix ? 'pl-1' : 'pl-3'
           }`}
         />
