@@ -42,7 +42,7 @@ export function PinnedAnswer({ result, ticker, targetRef }: PinnedAnswerProps) {
     >
       <div className="mx-auto max-w-[26rem] px-5 pt-[calc(env(safe-area-inset-top)+0.75rem)]">
         <div className="flex items-baseline gap-2 border-b-[1.5px] border-ink pb-2.5">
-          <span className={`font-display text-[30px] leading-[0.8] ${count > 0 ? 'text-accent' : 'text-muted'}`}>
+          <span className={`tnum text-[30px] leading-[0.8] font-extralight ${count > 0 ? 'text-accent' : 'text-muted'}`}>
             {count.toLocaleString('en-US')}
           </span>
           <span className="tnum text-sm">

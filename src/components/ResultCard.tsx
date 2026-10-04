@@ -1,5 +1,5 @@
 import type { RefObject } from 'react'
-import { contractCountSize } from '../lib/contractCountSize'
+import { contractCountFontSize } from '../lib/contractCountFontSize'
 import { formatContracts, formatCurrency, formatPercent } from '../lib/format'
 import type { SizingResult, SizingWarning } from '../lib/sizing'
 import { ScaleJoint } from './ScaleJoint'
@@ -39,14 +39,15 @@ export function ResultCard({ result, ticker, ringsRef }: ResultCardProps) {
           {result.ok && count !== null ? (
             <span
               data-testid="recommended-contracts"
-              className={`font-display leading-[0.8] ${contractCountSize(count)} ${
+              style={{ fontSize: `${contractCountFontSize(count)}px` }}
+              className={`tnum font-sans leading-[0.8] font-extralight ${
                 result.recommended > 0 ? 'text-accent' : 'text-muted'
               }`}
             >
               {count}
             </span>
           ) : (
-            <span aria-hidden="true" className="font-display text-[56px] leading-[0.8] text-ink/30">
+            <span aria-hidden="true" className="text-[56px] leading-[0.8] font-extralight text-ink/30">
               –
             </span>
           )}

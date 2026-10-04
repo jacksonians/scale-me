@@ -42,7 +42,8 @@ Placeholders are told apart from typed values by weight (400 vs 500) and color (
 
 ### Type
 
-- **Poiret One** (`@fontsource/poiret-one`): the `scale-me` wordmark and the recommended number only. It has proportional figures, which is fine for a single centered number.
+- **Poiret One** (`@fontsource/poiret-one`): the `scale-me` wordmark only. Its "0" is a plain circle, which inside the rings reads as another ring, so it is not used for numbers.
+- **Jost at weight 200** (extralight): the recommended number in the rings and in the pinned line. Thin and geometric like Poiret One, but every digit is legible.
 - **Jost** (`@fontsource-variable/jost`): everything else. It has true tabular figures; all numeric values use `font-variant-numeric: tabular-nums lining-nums`.
 - Remove `@fontsource-variable/archivo` and the condensed `figures` utility. Replace `figures` with a `tnum` utility (tabular, lining figures, no width change).
 - Both fonts are self-hosted from npm. No Google Fonts requests in production.
@@ -127,15 +128,7 @@ New order: header (wordmark + subtitle + `ScreenshotImport`) → `ResultCard` �
 
 - Keeps `<section aria-labelledby="your-trade-heading">` with the heading text "Your trade", now visually hidden (`sr-only`), so `getByRole('region', { name: 'Your trade' })` keeps working.
 - Rings: a 190px circle of concentric ring lines (repeating radial gradient in `--color-ring-line`), with a 128px inner circle bordered 1.5px ink on `--color-ground`. Inside: the number (`data-testid="recommended-contracts"`) and the word "contracts" / "contract" beneath it at 12px muted.
-- Number size by formatted length (`result.recommended.toLocaleString('en-US')`). Poiret One's "0" is 0.86em wide and the inner circle leaves about 108px, so (measured):
-  - 1 character: 88px
-  - 2 characters: 60px
-  - 3 characters: 40px
-  - 4–5 characters (e.g. "1,250"): 28px
-  - 6 characters: 24px
-  - 7 characters: 20px
-  - 8+ characters: 15px
-  Implemented as a pure function `contractCountSize(text: string): string` in `src/lib/contractCountSize.ts` returning a Tailwind text-size class, so it's unit-testable.
+- Number size: `contractCountFontSize(text: string): number` in `src/lib/contractCountFontSize.ts` returns the largest px size that fits the inner ring: `min(88, floor(108 / (digits × 0.559 + commas × 0.285)))`, using measured Jost 200 tabular widths in em. Applied as an inline `font-size`. Examples: "2" and "12" → 88px, "125" → 64px, "1,250" → 42px, "125,000" → 29px.
 - Number color: accent when `recommended > 0`; muted when `recommended === 0`.
 - Empty state (`!result.ok`): the rings show an en dash "–" at 56px in 30% ink, not exposed to screen readers (`aria-hidden`). An `sr-only` paragraph reads: "Fill in the reference trade and your portfolio to see how many contracts to buy."
 - Caption (when `result.ok`), left-aligned, 14px muted with ink emphasis:
@@ -188,7 +181,7 @@ New order: header (wordmark + subtitle + `ScreenshotImport`) → `ResultCard` �
 
 - Purpose: keep the answer visible when the rings are scrolled off screen.
 - Shows only when `result.ok` and the rings element is not intersecting the viewport. Uses one `IntersectionObserver` on the rings element. If `IntersectionObserver` is undefined (old browsers, jsdom), it never shows.
-- Content: the number in Poiret One at 30px, accent colored (muted when 0), then "{TICKER} contracts, {myCost}" (ticker omitted when blank; "contract" when 1) at 14px ink. Bottom border: 1.5px ink line. Background `--color-ground`, `position: fixed` across the top of the viewport (inner content constrained to the column width), top padding includes `env(safe-area-inset-top)`, `z-index` above content. It must be out of flow: a sticky element would push content down when it appears, which can scroll the rings back into view and make the line flicker on and off.
+- Content: the number in Jost 200 at 30px, accent colored (muted when 0), then "{TICKER} contracts, {myCost}" (ticker omitted when blank; "contract" when 1) at 14px ink. Bottom border: 1.5px ink line. Background `--color-ground`, `position: fixed` across the top of the viewport (inner content constrained to the column width), top padding includes `env(safe-area-inset-top)`, `z-index` above content. It must be out of flow: a sticky element would push content down when it appears, which can scroll the rings back into view and make the line flicker on and off.
 - `html { scroll-padding-top: 4.5rem }` so a focused input or anchor is never hidden under the pinned line.
 - `aria-hidden="true"`: it repeats the result, which screen readers already have.
 - Lives outside the "Your trade" region so it doesn't duplicate test matches.

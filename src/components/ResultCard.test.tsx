@@ -25,7 +25,8 @@ describe('ResultCard', () => {
 
     const count = region.getByTestId('recommended-contracts')
     expect(count).toHaveTextContent('2')
-    expect(count).toHaveClass('text-accent', 'text-[88px]')
+    expect(count).toHaveClass('text-accent')
+    expect(count).toHaveStyle({ fontSize: '88px' })
     expect(screen.getByRole('region', { name: 'Your trade' })).toHaveTextContent('Buy 2 NVDA at $2.50 per share')
     expect(region.getByText('$500')).toBeInTheDocument()
     expect(screen.getByRole('region', { name: 'Your trade' })).toHaveTextContent(
@@ -43,7 +44,8 @@ describe('ResultCard', () => {
   it('shows a zero in muted gray with no buy line or cost', () => {
     const region = renderResult(15_000)
 
-    expect(region.getByTestId('recommended-contracts')).toHaveClass('text-muted')
+    // Jost, not the display face: Poiret One's zero is a plain circle that reads as another ring
+    expect(region.getByTestId('recommended-contracts')).toHaveClass('text-muted', 'font-sans', 'font-extralight')
     expect(screen.getByRole('region', { name: 'Your trade' })).not.toHaveTextContent('Buy')
     expect(screen.getByRole('region', { name: 'Your trade' })).not.toHaveTextContent('the most you can lose')
     expect(region.getByRole('status')).toHaveTextContent('$20,000')
