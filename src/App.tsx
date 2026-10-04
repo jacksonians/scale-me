@@ -86,11 +86,15 @@ export default function App() {
 
   return (
     <main className="mx-auto flex max-w-[26rem] flex-col gap-6 px-5 pt-[calc(env(safe-area-inset-top)+1.5rem)] pb-12 sm:pt-10">
-      <header>
-        <h1 className="font-display text-[28px] leading-none">scale-me</h1>
-        <p className="mt-1 text-[12.5px] text-muted">Size their trade to your portfolio</p>
-      </header>
-      <ScreenshotImport onExtracted={applyScreenshot} />
+      <ScreenshotImport
+        onExtracted={applyScreenshot}
+        heading={
+          <>
+            <h1 className="font-display text-[28px] leading-none">scale-me</h1>
+            <p className="mt-1 text-[12.5px] text-muted">Size their trade to your portfolio</p>
+          </>
+        }
+      />
       <ResultCard result={result} ticker={normalizeTicker(trade.ticker)} ringsRef={ringsRef} />
       <ReferenceTradeInputs trade={trade} onChange={updateTrade} errors={tradeErrors} summary={referenceSummary} />
       <MyPortfolioInput
