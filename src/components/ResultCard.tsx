@@ -1,9 +1,13 @@
+import type { RefObject } from 'react'
+import { contractCountSize } from '../lib/contractCountSize'
 import { formatContracts, formatCurrency, formatPercent } from '../lib/format'
 import type { SizingResult, SizingWarning } from '../lib/sizing'
+import { ScaleJoint } from './ScaleJoint'
 
 interface ResultCardProps {
   result: SizingResult
   ticker: string
+  ringsRef: RefObject<HTMLDivElement | null>
 }
 
 function warningText(warning: SizingWarning, refPct: number): string {
@@ -22,61 +26,73 @@ function warningText(warning: SizingWarning, refPct: number): string {
   }
 }
 
-export function ResultCard({ result, ticker }: ResultCardProps) {
+export function ResultCard({ result, ticker, ringsRef }: ResultCardProps) {
+  const count = result.ok ? result.recommended.toLocaleString('en-US') : null
+
   return (
-    <section
-      aria-labelledby="your-trade-heading"
-      className="rounded-lg bg-carbon px-4 py-5 text-carbon-ink shadow-[0_1px_0_rgb(0_0_0/0.15)] sm:px-5"
-    >
-      <h2 id="your-trade-heading" className="text-lg font-semibold">
+    <section aria-labelledby="your-trade-heading" className="flex flex-col gap-3">
+      <h2 id="your-trade-heading" className="sr-only">
         Your trade
       </h2>
-
-      {!result.ok ? (
-        <p className="mt-2 max-w-sm text-carbon-soft">
-          Fill in the reference trade and your portfolio to see how many contracts to buy.
-        </p>
-      ) : (
-        <>
-          <p className="mt-4 text-carbon-soft">
-            {result.recommended > 0 ? 'Buy' : 'At the same share of your portfolio'}
-          </p>
-          <p className="flex flex-wrap items-baseline gap-x-3">
+      <div ref={ringsRef} className="rings mx-auto flex size-[190px] items-center justify-center rounded-full">
+        <div className="flex size-[128px] flex-col items-center justify-center rounded-full border-[1.5px] border-ink bg-ground">
+          {result.ok && count !== null ? (
             <span
               data-testid="recommended-contracts"
-              className="tnum text-[clamp(5rem,26vw,8rem)] leading-[0.85] font-bold tracking-tight"
+              className={`font-display leading-[0.8] ${contractCountSize(count)} ${
+                result.recommended > 0 ? 'text-accent' : 'text-muted'
+              }`}
             >
-              {result.recommended.toLocaleString('en-US')}
+              {count}
             </span>
-            <span className="text-xl font-medium">
-              {ticker ? `${ticker} ` : ''}
-              {result.recommended === 1 ? 'contract' : 'contracts'}
+          ) : (
+            <span aria-hidden="true" className="font-display text-[56px] leading-[0.8] text-ink/30">
+              –
             </span>
-          </p>
-          <p className="mt-2 text-carbon-soft">at {formatCurrency(result.premium)} premium per share</p>
-
-          <dl className="mt-5 grid grid-cols-[1fr_auto] gap-x-4 gap-y-2 border-t border-white/20 pt-4">
-            <dt className="text-carbon-soft">Cost, and the most you can lose</dt>
-            <dd className="tnum text-right text-lg font-semibold">{formatCurrency(result.myCost)}</dd>
-            <dt className="text-carbon-soft">Share of your portfolio</dt>
-            <dd className="tnum text-right text-lg font-semibold">{formatPercent(result.myPct)}</dd>
-            <dt className="text-carbon-soft">Share of theirs</dt>
-            <dd className="tnum text-right text-lg font-semibold">{formatPercent(result.refPct)}</dd>
-          </dl>
-
+          )}
+          <span aria-hidden={!result.ok} className="mt-1.5 text-xs text-muted">
+            {result.ok && result.recommended === 1 ? 'contract' : 'contracts'}
+          </span>
+        </div>
+      </div>
+      <ScaleJoint scaleRatio={result.ok ? result.scaleRatio : null} />
+      {!result.ok ? (
+        <p className="sr-only">Fill in the reference trade and your portfolio to see how many contracts to buy.</p>
+      ) : (
+        <>
+          <div className="tnum flex flex-col text-sm leading-normal text-muted">
+            {result.recommended > 0 ? (
+              <>
+                <p>
+                  Buy{' '}
+                  <b className="font-semibold text-ink">
+                    {ticker ? `${count} ${ticker}` : formatContracts(result.recommended)}
+                  </b>{' '}
+                  at {formatCurrency(result.premium)} per share
+                </p>
+                <p>
+                  <b className="font-semibold text-ink">{formatCurrency(result.myCost)}</b>, the most you can lose
+                </p>
+                <p>
+                  {formatPercent(result.myPct)} of your portfolio, theirs was {formatPercent(result.refPct)}
+                </p>
+              </>
+            ) : (
+              <p>At the same share of your portfolio</p>
+            )}
+          </div>
           {result.roundedUp && result.recommended > 0 && (
-            <p className="mt-4 text-sm text-carbon-soft">
+            <p className="tnum text-[12.5px] text-muted">
               Rounding up to {formatContracts(result.roundedUp.contracts)} would cost{' '}
               {formatCurrency(result.roundedUp.cost)}, {formatPercent(result.roundedUp.pct)} of your portfolio.
             </p>
           )}
-
           {result.warnings.length > 0 && (
-            <div role="status" className="mt-4 flex flex-col gap-2">
+            <div role="status" className="flex flex-col gap-2">
               {result.warnings.map((warning) => (
                 <p
                   key={warning.kind}
-                  className="rounded-md border-l-4 border-caution bg-caution-bg px-3 py-2 text-sm text-ink"
+                  className="tnum border-l-[3px] border-caution py-1.5 pl-2.5 text-[12.5px] leading-normal text-ink"
                 >
                   {warningText(warning, result.refPct)}
                 </p>
