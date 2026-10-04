@@ -11,7 +11,6 @@ interface AmountFieldProps {
   error?: string
   inputMode?: 'decimal' | 'numeric' | 'text'
   groupDigitsOnBlur?: boolean
-  className?: string
 }
 
 export function AmountField({
@@ -24,48 +23,47 @@ export function AmountField({
   error,
   inputMode = 'decimal',
   groupDigitsOnBlur = false,
-  className = '',
 }: AmountFieldProps) {
   const id = useId()
   const descriptionId = `${id}-description`
   const description = error ?? hint
 
   return (
-    <div className={`flex flex-col gap-1.5 ${className}`}>
-      <label htmlFor={id} className="text-sm font-medium text-muted">
-        {label}
-      </label>
-      <div
-        className={`flex items-center rounded-md border bg-sheet transition-colors focus-within:border-focus focus-within:ring-1 focus-within:ring-focus ${
-          error ? 'border-error' : 'border-rule'
-        }`}
-      >
-        {prefix && (
-          <span aria-hidden="true" className="tnum pl-3 text-lg text-muted">
-            {prefix}
-          </span>
-        )}
-        <input
-          id={id}
-          type="text"
-          inputMode={inputMode}
-          autoComplete="off"
-          autoCorrect="off"
-          autoCapitalize="off"
-          spellCheck={false}
-          value={value}
-          placeholder={placeholder}
-          onChange={(event) => onChange(event.target.value)}
-          onBlur={groupDigitsOnBlur ? () => onChange(formatAmountInput(value)) : undefined}
-          aria-invalid={error ? true : undefined}
-          aria-describedby={description ? descriptionId : undefined}
-          className={`tnum min-w-0 flex-1 bg-transparent py-2.5 pr-3 text-lg outline-none placeholder:text-muted/60 focus-visible:outline-none ${
-            prefix ? 'pl-1' : 'pl-3'
+    <div className="flex flex-col">
+      <div className="flex items-end justify-between gap-3">
+        <label htmlFor={id} className="pb-1.5 text-[13px] text-muted">
+          {label}
+        </label>
+        <div
+          className={`flex w-[9.5rem] shrink-0 items-baseline rounded-[2px] border-b-[1.5px] transition-colors focus-within:outline-2 focus-within:outline-offset-[3px] focus-within:outline-accent ${
+            error ? 'border-error' : 'border-ink'
           }`}
-        />
+        >
+          {prefix && (
+            <span aria-hidden="true" className="tnum text-[17px] text-muted">
+              {prefix}
+            </span>
+          )}
+          <input
+            id={id}
+            type="text"
+            inputMode={inputMode}
+            autoComplete="off"
+            autoCorrect="off"
+            autoCapitalize="off"
+            spellCheck={false}
+            value={value}
+            placeholder={placeholder}
+            onChange={(event) => onChange(event.target.value)}
+            onBlur={groupDigitsOnBlur ? () => onChange(formatAmountInput(value)) : undefined}
+            aria-invalid={error ? true : undefined}
+            aria-describedby={description ? descriptionId : undefined}
+            className="tnum min-w-0 flex-1 bg-transparent pt-4 pb-1 text-right text-[17px] font-medium outline-none placeholder:font-normal placeholder:text-placeholder focus-visible:outline-none"
+          />
+        </div>
       </div>
       {description && (
-        <p id={descriptionId} className={`text-sm ${error ? 'text-error' : 'text-muted'}`}>
+        <p id={descriptionId} className={`mt-1 text-right text-xs ${error ? 'text-error' : 'text-muted'}`}>
           {description}
         </p>
       )}

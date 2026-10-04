@@ -8,7 +8,10 @@ interface MyPortfolioInputProps {
 
 export function MyPortfolioInput({ value, onChange, error }: MyPortfolioInputProps) {
   return (
-    <div className="rounded-lg border border-rule bg-sheet px-4 py-4 sm:px-5">
+    <section aria-labelledby="you-heading" className="flex flex-col gap-1">
+      <h2 id="you-heading" className="text-[13px] font-semibold">
+        You
+      </h2>
       <AmountField
         label="Your portfolio"
         value={value}
@@ -20,6 +23,6 @@ export function MyPortfolioInput({ value, onChange, error }: MyPortfolioInputPro
         groupDigitsOnBlur
         error={error}
       />
-    </div>
+    </section>
   )
 }
