@@ -18,6 +18,9 @@ function firstImage(files: FileList | File[] | undefined | null): File | undefin
   return Array.from(files ?? []).find((file) => file.type.startsWith('image/'))
 }
 
+// Browsers repeat dragover every 50-350ms during a drag
+const DRAG_IDLE_MS = 1000
+
 function isFileDrag(event: DragEvent): boolean {
   return Array.from(event.dataTransfer?.types ?? []).includes('Files')
 }
@@ -78,19 +81,39 @@ export function ScreenshotImport({ onExtracted, heading }: ScreenshotImportProps
         void readRef.current(file)
       }
     }
+    // dragover keeps firing while a file is over the page, so its silence means the
+    // drag ended somewhere we got no event for (Escape, or a quick exit past the edge)
+    let idleTimer: number | undefined
+    function keepDragging() {
+      setDragging(true)
+      window.clearTimeout(idleTimer)
+      idleTimer = window.setTimeout(() => setDragging(false), DRAG_IDLE_MS)
+    }
+    function stopDragging() {
+      window.clearTimeout(idleTimer)
+      setDragging(false)
+    }
     function handleDragEnter(event: DragEvent) {
       if (isFileDrag(event)) {
-        setDragging(true)
+        keepDragging()
       }
     }
     function handleDragOver(event: DragEvent) {
       // Without this the browser refuses the drop (or opens the image itself)
       if (isFileDrag(event)) {
         event.preventDefault()
+        keepDragging()
+      }
+    }
+    function handleDragLeave(event: DragEvent) {
+      // No element being entered means the pointer left the window. If a browser
+      // reports that mid-page, the next dragover shows the overlay again.
+      if (!event.relatedTarget) {
+        stopDragging()
       }
     }
     function handleDrop(event: DragEvent) {
-      setDragging(false)
+      stopDragging()
       const files = event.dataTransfer?.files
       // Dropped text or links are not ours to handle
       if (!files || files.length === 0) {
@@ -103,11 +126,14 @@ export function ScreenshotImport({ onExtracted, heading }: ScreenshotImportProps
     document.addEventListener('paste', handlePaste)
     document.addEventListener('dragenter', handleDragEnter)
     document.addEventListener('dragover', handleDragOver)
+    document.addEventListener('dragleave', handleDragLeave)
     document.addEventListener('drop', handleDrop)
     return () => {
+      window.clearTimeout(idleTimer)
       document.removeEventListener('paste', handlePaste)
       document.removeEventListener('dragenter', handleDragEnter)
       document.removeEventListener('dragover', handleDragOver)
+      document.removeEventListener('dragleave', handleDragLeave)
       document.removeEventListener('drop', handleDrop)
     }
   }, [])

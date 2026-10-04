@@ -250,4 +250,44 @@ describe('ScreenshotImport', () => {
 
     expect(screen.queryByTestId('drop-overlay')).not.toBeInTheDocument()
   })
+
+  it('hides the drop overlay when the drag leaves the window', () => {
+    renderImport()
+
+    fireEvent.dragEnter(document.body, { dataTransfer: { types: ['Files'] } })
+    // Chrome sends this to the element under the pointer at dragenter, not the overlay
+    fireEvent.dragLeave(document.body, { relatedTarget: null, dataTransfer: { types: ['Files'] } })
+
+    expect(screen.queryByTestId('drop-overlay')).not.toBeInTheDocument()
+  })
+
+  it('hides a stuck drop overlay once the drag stops, as when Escape cancels it', () => {
+    vi.useFakeTimers()
+    try {
+      renderImport()
+
+      fireEvent.dragEnter(document.body, { dataTransfer: { types: ['Files'] } })
+      act(() => vi.advanceTimersByTime(1000))
+
+      expect(screen.queryByTestId('drop-overlay')).not.toBeInTheDocument()
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+
+  it('keeps the drop overlay while the drag continues over the page', () => {
+    vi.useFakeTimers()
+    try {
+      renderImport()
+
+      fireEvent.dragEnter(document.body, { dataTransfer: { types: ['Files'] } })
+      act(() => vi.advanceTimersByTime(800))
+      fireEvent.dragOver(document.body, { dataTransfer: { types: ['Files'] } })
+      act(() => vi.advanceTimersByTime(800))
+
+      expect(screen.getByTestId('drop-overlay')).toBeInTheDocument()
+    } finally {
+      vi.useRealTimers()
+    }
+  })
 })
